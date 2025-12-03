@@ -1,0 +1,3 @@
+dataset: './params/dataset.csv'
+feature_extractors: './params/feature_extractors.csv'
+wsi_dir: '/mnt/beegfs/labs/DiGenomaLab/Machine_Learning/cancer_histology/data/tcga_gdc/images/tcga_brca/'
