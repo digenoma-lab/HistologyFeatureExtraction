@@ -28,8 +28,8 @@ process extract_coordinates {
     """
     stub:
     """
-    mkdir -p processed_data/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/patches/
-    mkdir -p processed_data/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/visualization/
+    mkdir -p ${job_dir}/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/patches/
+    mkdir -p ${job_dir}/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/visualization/
     """
 }
 
@@ -47,16 +47,17 @@ process patch_features {
     """
     stub:
     """
-    mkdir -p processed_data/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
+    mkdir -p ${job_dir}/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
     """
 }
 
 process slide_features {
-    publishDir "${params.outdir}/", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
     input:
     tuple path(wsi_dir), path(dataset), path(job_dir), val(patch_encoder), val(slide_encoder), val(patch_size), val(mag), val(batch_size), val(overlap)
     output:
-    path(job_dir), emit: slide_features
+    path("${job_dir}/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/"), emit: slide_features
+    path("${job_dir}/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/"), emit: patch_features
     script:
     """
     python run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
@@ -66,6 +67,6 @@ process slide_features {
     """
     stub:
     """
-    mkdir -p processed_data/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/
+    mkdir -p ${job_dir}/tcga-brca/${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/
     """
 }

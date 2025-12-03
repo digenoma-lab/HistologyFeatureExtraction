@@ -8,4 +8,5 @@ workflow {
     dataset = wsi_dir.combine(dataset)
     dataset = dataset.combine(feature_extractors)
     trident(dataset)
+    trident.out.slide_features.view()
 }   
