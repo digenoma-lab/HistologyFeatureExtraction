@@ -7,9 +7,11 @@ workflow {
     dataset = Channel.fromPath(params.dataset)
 
     trident_dir = Channel.fromPath(params.trident_dir)
+    chief_dir = Channel.fromPath(params.chief_dir)
     dataset = wsi_dir.combine(dataset)
     dataset = dataset.combine(feature_extractors)
     dataset = dataset.combine(trident_dir)
+    dataset = dataset.combine(chief_dir)
     trident(dataset)
     trident.out.slide_features.view()
 }   
