@@ -1,16 +1,16 @@
 process segmentation {
+    publishDir "${params.outdir}/", mode: "copy"
     input:
-    tuple val(patch_size), val(mag), val(batch_size), val(overlap)
     path(dataset)
     path(wsi_dir)
     path(trident_dir)
     output:
-    tuple path("processed_data/"), val(patch_size), val(mag), val(batch_size), val(overlap), emit: seg
+    path("processed_data/"), emit: seg
     script:
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir processed_data/${wsi_dir} --task seg \\
-        --batch_size ${batch_size} --custom_list_of_wsis ${dataset}
+        --custom_list_of_wsis ${dataset}
     """
     stub:
     """

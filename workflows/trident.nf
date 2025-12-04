@@ -2,12 +2,13 @@ include { segmentation; extract_coordinates; slide_features; patch_features } fr
 workflow preprocessing {
     take:
     unique_configs
+    seg
     dataset
     wsi_dir
     trident_path
     main:
-    segmentation(unique_configs, dataset, wsi_dir, trident_path)
-    extract_coordinates(segmentation.out.seg, dataset, wsi_dir, trident_path)
+    unique_configs = seg.combine(unique_configs)
+    extract_coordinates(unique_configs, dataset, wsi_dir, trident_path)
     emit:
     coords = extract_coordinates.out.coords
 }
