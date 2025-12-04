@@ -1,0 +1,42 @@
+# Core dependencies for Histology Feature Extraction Pipeline
+# Python >= 3.10 required (for PRISM encoder support)
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Transformers and NLP (for PRISM encoder)
+transformers==4.42.4
+tokenizers>=0.19.0
+environs==11.0.0
+sacremoses==0.1.1
+
+# Image Processing
+opencv-python>=4.8.0
+Pillow>=10.0.0
+scikit-image>=0.21.0
+
+# Scientific Computing
+numpy>=1.24.0
+scipy>=1.11.0
+pandas>=2.0.0
+
+# WSI Processing
+openslide-python>=1.3.0
+cucim>=23.8.0
+
+# Utilities
+einops>=0.7.0
+tqdm>=4.66.0
+pyyaml>=6.0
+
+# Optional: For specific encoders
+# fairscale>=0.4.0  # For GigaPath
+# flash-attn==2.5.8  # For GigaPath (requires specific CUDA version)
+
+# Note: TRIDENT should be installed separately from its repository
+# pip install -e /path/to/TRIDENT
+
+# Note: CHIEF should be installed separately from its repository
+# Follow CHIEF installation instructions
+
