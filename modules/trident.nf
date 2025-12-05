@@ -44,12 +44,12 @@ process extract_coordinates {
 
 process patch_features {
     input:
-    tuple path(job_dir), val(patch_encoder), val(slide_encoder), val(patch_size), val(mag), val(batch_size), val(overlap)
+    tuple path(job_dir), val(patch_encoder), val(patch_size), val(mag), val(batch_size), val(overlap)
     path(dataset)
     path(wsi_dir)
     path(trident_dir)
     output:
-    tuple path(job_dir), val(patch_encoder), val(slide_encoder), val(patch_size), val(mag), val(batch_size), val(overlap), emit: patch_features
+    tuple path(job_dir), val(patch_encoder), val(patch_size), val(mag), val(batch_size), val(overlap), emit: patch_features
     script:
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
