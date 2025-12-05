@@ -134,8 +134,8 @@ main.nf
 
 If you use this pipeline, please cite:
 
-- TRIDENT: [Citation information]
-- CHIEF: [Citation information if used]
+- [TRIDENT](https://github.com/mahmoodlab/TRIDENT)
+- [CHIEF](https://github.com/hms-dbmi/CHIEF)
 
 ## License
 
