@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Histology Feature Extraction Pipeline Parameters",
+  "description": "Parameters for the Histology Feature Extraction pipeline using TRIDENT",
+  "type": "object",
+  "properties": {
+    "dataset": {
+      "type": "string",
+      "format": "file-path",
+      "description": "Path to CSV file containing list of WSIs to process. Format: case_id,wsi",
+      "default": "./params/custom_wsis.csv",
+      "help_text": "CSV file with columns: case_id, wsi. Example: TCGA-3C-AAAU,TCGA-3C-AAAU-01A-01-TS1.2F52DD63-7476-4E85-B7C6-E06092DB6CC1.svs"
+    },
+    "wsi_dir": {
+      "type": "string",
+      "format": "directory-path",
+      "description": "Directory containing whole slide image (WSI) files",
+      "help_text": "Path to directory where WSI files are stored. Must be accessible from the execution environment."
+    },
+    "outdir": {
+      "type": "string",
+      "format": "directory-path",
+      "description": "Output directory for pipeline results",
+      "default": "./results/",
+      "help_text": "Directory where all pipeline outputs will be saved. Results include segmentation, coordinates, patch features, and slide features."
+    }
+  },
+  "required": ["wsi_dir"]
+}
