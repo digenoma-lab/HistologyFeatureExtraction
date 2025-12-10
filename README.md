@@ -1,5 +1,9 @@
 # Histology Feature Extraction Pipeline
 
+<p align="center">
+  <img src="imgs/logo.png" alt="Histology Feature Extraction Pipeline" width="40%"/>
+</p>
+
 A Nextflow pipeline for extracting features from histology whole slide images (WSI) using multiple patch and slide encoders via [TRIDENT](https://github.com/mahmoodlab/TRIDENT).
 
 ## Overview
@@ -22,6 +26,7 @@ The pipeline is optimized to avoid redundant computation by:
 - TRIDENT repository cloned and configured
 - CHIEF repository (if using CHIEF slide encoder)
 - Access to required model weights and checkpoints
+- Hugging Face account with access token (for downloading model weights)
 
 ## Installation
 
@@ -58,6 +63,7 @@ Edit `params/params.yml` to configure:
 - `outdir`: Output directory for results
 - `trident_dir`: Path to TRIDENT repository
 - `chief_dir`: Path to CHIEF repository (if using)
+- `token`: Hugging Face access token for downloading model weights (required)
 
 ### Feature Extractors Configuration
 
@@ -83,8 +89,10 @@ TCGA-3C-AAAU,TCGA-3C-AAAU-01A-01-TS1.2F52DD63-7476-4E85-B7C6-E06092DB6CC1.svs
 ### Basic Usage
 
 ```bash
-nextflow run main.nf -profile kutral -params-file params/params.yml
+nextflow run main.nf -profile kutral -params-file params/params.yml --token <HUGGINGFACE_TOKEN>
 ```
+
+> **Note**: The `--token` parameter is required. You can obtain a Hugging Face access token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). Make sure your token has access to the required model repositories.
 
 ### Profiles
 
