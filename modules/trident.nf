@@ -10,7 +10,7 @@ process segmentation {
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir processed_data/${wsi_dir} --task seg \\
-        --custom_list_of_wsis ${dataset}
+        --custom_list_of_wsis ${dataset} --max_workers 10
     """
     stub:
     """
@@ -33,7 +33,7 @@ process extract_coordinates {
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir ${job_dir}/${wsi_dir} --patch_size ${patch_size} --mag ${mag} \\
-        --task coords --custom_list_of_wsis ${dataset}
+        --task coords --custom_list_of_wsis ${dataset} --max_workers 10
     """
     stub:
     """
@@ -52,10 +52,11 @@ process patch_features {
     tuple path(job_dir), val(patch_encoder), val(patch_size), val(mag), val(batch_size), val(overlap), emit: patch_features
     script:
     """
+    python -c "from huggingface_hub import login; login(token='${params.token}')"
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir ${job_dir}/${wsi_dir} --patch_size ${patch_size} \\
         --mag ${mag} --task feat --patch_encoder ${patch_encoder} \\
-        --batch_size ${batch_size} --custom_list_of_wsis ${dataset}
+        --batch_size ${batch_size} --custom_list_of_wsis ${dataset} --max_workers 10
     """
     stub:
     """
@@ -77,10 +78,11 @@ process slide_features {
     path("${job_dir}/${wsi_dir}/${mag}x_${patch_size}px_${overlap}px_overlap/visualization/"), emit: visualization
     script:
     """
+    python -c "from huggingface_hub import login; login(token='${params.token}')"
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir ${job_dir}/${wsi_dir} --patch_size ${patch_size} \\
         --mag ${mag} --task feat --slide_encoder ${slide_encoder} \\
-        --batch_size ${batch_size} --custom_list_of_wsis ${dataset}
+        --batch_size ${batch_size} --custom_list_of_wsis ${dataset} --max_workers 10
     """
     stub:
     """
