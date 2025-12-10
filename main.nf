@@ -3,7 +3,7 @@ include { segmentation } from './modules/trident.nf'
 workflow {
     wsi_dir = channel.value(file(params.wsi_dir))
     all_encoders = channel
-        .fromPath(params.feature_extractors)
+        .fromPath("${projectDir}/params/feature_extractors.csv")
         .splitCsv(header: true)
         .map { row -> tuple(
             row.patch_encoder,
@@ -11,7 +11,7 @@ workflow {
             row.patch_size.toInteger(),
             row.mag.toInteger(),
             row.batch_size.toInteger(),
-            row.overlap.toInteger()) 
+            row.overlap.toInteger())
         }
 
     unique_configs = all_encoders
