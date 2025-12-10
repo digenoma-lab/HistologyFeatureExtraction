@@ -32,7 +32,7 @@
           "help_text": "Directory where all pipeline outputs will be saved. Results include segmentation, coordinates, patch features, and slide features."
         }
       },
-      "required": ["wsi_dir"]
+      "required": ["dataset", "wsi_dir", "outdir"]
     }
   }
 }
