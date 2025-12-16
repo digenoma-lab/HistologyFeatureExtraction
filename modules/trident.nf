@@ -107,7 +107,7 @@ process slide_features {
 
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir . --patch_size ${patch_size} \\
-        --mag ${mag} --task slide_feat --slide_encoder ${slide_encoder} \\
+        --mag ${mag} --task feat --slide_encoder ${slide_encoder} \\
         --batch_size ${batch_size}
     """
     stub:
