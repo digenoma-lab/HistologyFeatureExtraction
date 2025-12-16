@@ -3,12 +3,11 @@ workflow preprocessing {
     take:
     unique_configs
     seg
-    dataset
     wsi_dir
     trident_path
     main:
     unique_configs = seg.combine(unique_configs)
-    extract_coordinates(unique_configs, dataset, wsi_dir, trident_path)
+    extract_coordinates(unique_configs, wsi_dir, trident_path)
     emit:
     coords = extract_coordinates.out.coords
 }
@@ -16,7 +15,6 @@ workflow patch_feature_extraction {
     take:
     unique_feature_encoders
     coords
-    dataset
     wsi_dir
     trident_path
     main:
@@ -39,7 +37,7 @@ workflow patch_feature_extraction {
                 item[9]  // overlap
             )
         }
-    patch_features(combined_configs, dataset, wsi_dir, trident_path)
+    patch_features(combined_configs, wsi_dir, trident_path)
     emit: 
     patch_features = patch_features.out.patch_features
 }
@@ -48,7 +46,6 @@ workflow slide_feature_extraction {
     take:
     all_encoders
     patch_features
-    dataset
     wsi_dir
     trident_path
     main:
@@ -74,5 +71,5 @@ workflow slide_feature_extraction {
                 item[5],  // overlap
             )
         }
-    slide_features(combined_configs, dataset, wsi_dir, trident_path)
+    slide_features(combined_configs, wsi_dir, trident_path)
 }

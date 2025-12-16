@@ -1,5 +1,5 @@
 include { preprocessing; patch_feature_extraction; slide_feature_extraction } from './workflows/trident.nf'
-include { segmentation } from './modules/trident.nf'
+include { segmentation; setup_dataset } from './modules/trident.nf'
 workflow {
     wsi_dir = channel.value(file(params.wsi_dir))
     all_encoders = channel
@@ -26,12 +26,15 @@ workflow {
         }
         .unique()
 
-    dataset = channel.value(file(params.dataset))
+    dataset = channel.fromPath(params.dataset)
+        .splitCsv(header: true)
+        .map { row -> tuple(row.case_id, row.wsi) }
+
     trident_dir = channel.value(file(params.trident_dir))
-
-
-    segmentation(dataset, wsi_dir, trident_dir)
-    preprocessing(unique_configs, segmentation.out.seg, dataset, wsi_dir, trident_dir)
-    patch_feature_extraction(unique_feature_encoders, preprocessing.out.coords, dataset, wsi_dir, trident_dir)
-    slide_feature_extraction(all_encoders, patch_feature_extraction.out.patch_features, dataset, wsi_dir, trident_dir)
+    setup_dataset(dataset)
+    segmentation(setup_dataset.out.dataset, wsi_dir, trident_dir)
+    preprocessing(unique_configs, segmentation.out.seg, wsi_dir, trident_dir)
+    /*
+    patch_feature_extraction(unique_feature_encoders, preprocessing.out.coords, wsi_dir, trident_dir)
+    slide_feature_extraction(all_encoders, patch_feature_extraction.out.patch_features, wsi_dir, trident_dir)*/
 }   
