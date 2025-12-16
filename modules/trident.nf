@@ -71,7 +71,7 @@ process patch_features {
     path(wsi_dir)
     path(trident_dir)
     output:
-    tuple val(patch_encoder), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/*.h5"), emit: patch_features
+    tuple val(patch_encoder), val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/*.h5"), emit: patch_features
     script:
     """
     mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/patches/
@@ -93,25 +93,26 @@ process patch_features {
 }
 
 process slide_features {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/*.h5"
     input:
-    tuple path(dataset), path(job_dir), val(patch_encoder), val(slide_encoder), val(patch_size), val(mag), val(batch_size), val(overlap)
+    tuple val(patch_encoder), val(slide_encoder), val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path(features, stageAs: 'features/*')
     path(wsi_dir)
     path(trident_dir)
     output:
-    path("${job_dir}/${wsi_dir}/${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/"), emit: slide_features
-    path("${job_dir}/${wsi_dir}/${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/"), emit: patch_features
-    path("${job_dir}/${wsi_dir}/${mag}x_${patch_size}px_${overlap}px_overlap/patches/"), emit: patches
-    path("${job_dir}/${wsi_dir}/${mag}x_${patch_size}px_${overlap}px_overlap/visualization/"), emit: visualization
+    tuple val(slide_encoder), val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/*.h5"), emit: slide_features
     script:
     """
+    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
+    mv features/*.h5 ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
+
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir ${job_dir}/${wsi_dir} --patch_size ${patch_size} \\
-        --mag ${mag} --task feat --slide_encoder ${slide_encoder} \\
-        --batch_size ${batch_size} --custom_list_of_wsis ${dataset}
+        --job_dir . --patch_size ${patch_size} \\
+        --mag ${mag} --task slide_feat --slide_encoder ${slide_encoder} \\
+        --batch_size ${batch_size}
     """
     stub:
     """
-    mkdir -p ${job_dir}/${wsi_dir}/${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/
+    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/
+    touch ${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/${wsi.replace('.tif', '.h5').replace('.svs', '.h5')}
     """
 }
