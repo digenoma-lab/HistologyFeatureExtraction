@@ -56,27 +56,33 @@ workflow slide_feature_extraction {
     wsi_dir
     trident_path
     main:
-
+    // patch_features: [patch_encoder, wsi, patch_size, mag, batch_size, overlap, features_path]
+    //                      [0]        [1]     [2]      [3]     [4]        [5]        [6]
+    // all_encoders: [patch_encoder, slide_encoder, patch_size, mag, batch_size, overlap]
+    //                    [7]            [8]           [9]      [10]    [11]       [12]
     combined_configs = patch_features
         .combine(all_encoders)
         .filter { item ->
-            def match = item[1] == item[6] &&  // job_dir: patch_features[0] == encoder[6]
-                        item[2] == item[8] &&  // patch_size: patch_features[2] == encoder[7]
-                        item[3] == item[9] &&  // mag: patch_features[3] == encoder[8]
-                        item[4] == item[10] &&  // batch_size: patch_features[4] == encoder[9]
-                        item[5] == item[11]    // overlap: patch_features[5] == encoder[10]
+            def match = item[0] == item[7] &&   // patch_encoder
+                        item[2] == item[9] &&   // patch_size
+                        item[3] == item[10] &&  // mag
+                        item[4] == item[11] &&  // batch_size
+                        item[5] == item[12]     // overlap
             match
         }
         .map { item ->
             tuple(
-                item[0],  // job_dir
-                item[1],  // patch_encoder
-                item[7],  // slide_encoder
-                item[2],  // patch_size
-                item[3],  // mag
-                item[4],  // batch_size
-                item[5],  // overlap
+                item[7],   // patch_encoder
+                item[8],   // slide_encoder
+                item[1],   // wsi
+                item[2],   // patch_size
+                item[3],   // mag
+                item[4],   // batch_size
+                item[5],   // overlap
+                item[6]    // features_path
             )
         }
     slide_features(combined_configs, wsi_dir, trident_path)
+    emit:
+    slide_features = slide_features.out.slide_features
 }

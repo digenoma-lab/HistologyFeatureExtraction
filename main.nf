@@ -35,6 +35,5 @@ workflow {
     segmentation(setup_dataset.out.dataset, wsi_dir, trident_dir)
     preprocessing(unique_configs, segmentation.out.seg, wsi_dir, trident_dir)
     patch_feature_extraction(unique_feature_encoders, preprocessing.out.coords, wsi_dir, trident_dir)
-    /*
-    slide_feature_extraction(all_encoders, patch_feature_extraction.out.patch_features, wsi_dir, trident_dir)*/
+    slide_feature_extraction(all_encoders, patch_feature_extraction.out.patch_features, wsi_dir, trident_dir)
 }   
