@@ -5,8 +5,10 @@ include {
     parse_patches;
     parse_features;
     parse_slide_features;
+    parse_segmentation;
     setup_dataset_batch_features;
-    setup_dataset_batch_patches
+    setup_dataset_batch_patches;
+    setup_dataset_batch_segmentation
 } from '../modules/trident.nf'
 
 def non_empty_files = { ch ->
@@ -34,6 +36,20 @@ def group_pending = { ch, with_encoder=false ->
 
 def pending_work = { csv_ch, dataset_ch, with_encoder=false ->
     group_pending(attach_dataset(csv_ch, dataset_ch, with_encoder), with_encoder)
+}
+
+def pending_work_segmentation = { csv_ch, dataset_ch ->
+    csv_ch
+        .map { row -> tuple(row.wsi) }
+        .combine(dataset_ch, by: 0)
+        .map { wsi, case_id, wsi_file -> "${case_id}\t${wsi_file}" }
+        .collect()
+        .map { lines ->
+            tuple(
+                lines.collect { it.split('\t', 2)[0] },
+                lines.collect { it.split('\t', 2)[1] }
+            )
+        }
 }
 
 workflow intersect {
@@ -67,6 +83,13 @@ workflow intersect {
         pendant = pending_work(parse_slide_features.out.splitCsv(header: true), dataset_join, true)
         setup_dataset_batch_features(pendant)
         dataset_batch = setup_dataset_batch_features.out.dataset
+    }
+    else if (mode == "segmentation") {
+        intersect_goals_done(merge_goals.out.goals, check_done.out.segmentation)
+        parse_segmentation(non_empty_files(intersect_goals_done.out.goals_not_done))
+        pendant = pending_work_segmentation(parse_segmentation.out.splitCsv(header: true), dataset_join)
+        setup_dataset_batch_segmentation(pendant)
+        dataset_batch = setup_dataset_batch_segmentation.out.dataset
     }
     else {
         error "Invalid mode: ${mode}"

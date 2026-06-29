@@ -1,8 +1,9 @@
 include { preprocessing; patch_feature_extraction; slide_feature_extraction } from './workflows/trident.nf'
 include { intersect as intersect_features;
 intersect as intersect_patches;
-intersect as intersect_slide_features } from './workflows/config.nf'
-
+intersect as intersect_slide_features;
+intersect as intersect_segmentation } from './workflows/config.nf'
+include { segmentation_batch } from './modules/trident.nf'
 workflow intersect_all {
     take:
     dataset
@@ -22,13 +23,19 @@ workflow intersect_all {
     .map{row -> params.outdir + "/" + row[4] + "x_" + row[5] + "px_" + row[6] + "px_overlap/slide_features_" + row[3] + "/" + row[0] + ".h5"}
     .collect()
 
+    all_combinations_segmentation = dataset
+        .map { row -> params.outdir.replaceAll(/\/$/, '') + "/thumbnails/" + row[0] + ".jpg" }
+        .collect()
+
     intersect_patches(all_combinations_patches, output_dir, "patches", dataset_join)
     intersect_features(all_combinations_features, output_dir, "features", dataset_join)
     intersect_slide_features(all_combinations_slide_features, output_dir, "slide_features", dataset_join)
+    intersect_segmentation(all_combinations_segmentation, output_dir, "segmentation", dataset_join)
     emit:
     dataset_patches = intersect_patches.out.dataset_batch
     dataset_features = intersect_features.out.dataset_batch
     dataset_slide_features = intersect_slide_features.out.dataset_batch
+    dataset_segmentation = intersect_segmentation.out.dataset_batch
 }
 
 workflow {
@@ -86,7 +93,10 @@ workflow {
         output_dir
     )
 
-    intersect_all.out.dataset_patches.view()
-    intersect_all.out.dataset_features.view()
-    intersect_all.out.dataset_slide_features.view()
+    intersect_all.out.dataset_patches.view({row -> "dataset_patches: ${row}"})
+    intersect_all.out.dataset_features.view({row -> "dataset_features: ${row}"})
+    intersect_all.out.dataset_slide_features.view({row -> "dataset_slide_features: ${row}"})
+    intersect_all.out.dataset_segmentation.view({row -> "dataset_segmentation: ${row}"})
+
+    segmentation_batch(intersect_all.out.dataset_segmentation, wsi_dir, trident_dir)
 }
