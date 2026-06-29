@@ -21,8 +21,8 @@ def attach_dataset = { csv_ch, dataset_ch, with_encoder=false ->
         .combine(dataset_ch, by: 0)
         .map { parts ->
             with_encoder
-                ? tuple(parts[1], parts[2], parts[3], parts[4], parts[0], parts[5], parts[6])
-                : tuple(parts[1], parts[2], parts[3], parts[0], parts[4], parts[5])
+                ? tuple(parts[1], parts[2], parts[3], parts[4], parts[5], parts[6])
+                : tuple(parts[1], parts[2], parts[3], parts[4], parts[5])
         }
 }
 
