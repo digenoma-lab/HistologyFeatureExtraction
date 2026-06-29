@@ -14,6 +14,51 @@ process setup_dataset {
     touch dataset_${case_id}.txt
     """
 }
+process setup_dataset_batch_features {
+    input:
+    tuple val(mag), val(patch_size), val(overlap), val(encoder), val(case_ids), val(wsi_files)
+    output:
+    tuple val(mag), val(patch_size), val(overlap), val(encoder), val(wsi_files), path('dataset.csv'), emit: dataset
+    script:
+    """
+    python - <<'PY'
+    import csv
+    case_ids = ${groovy.json.JsonOutput.toJson(case_ids)}
+    wsi_files = ${groovy.json.JsonOutput.toJson(wsi_files)}
+    with open('dataset.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['case_id', 'wsi'])
+        writer.writerows(zip(case_ids, wsi_files))
+    PY
+    """
+    stub:
+    """
+    echo "case_id,wsi" > dataset.csv
+    """
+}
+
+process setup_dataset_batch_patches {
+    input:
+    tuple val(mag), val(patch_size), val(overlap), val(case_ids), val(wsi_files)
+    output:
+    tuple val(mag), val(patch_size), val(overlap), val(wsi_files), path('dataset.csv'), emit: dataset
+    script:
+    """
+    python - <<'PY'
+    import csv
+    case_ids = ${groovy.json.JsonOutput.toJson(case_ids)}
+    wsi_files = ${groovy.json.JsonOutput.toJson(wsi_files)}
+    with open('dataset.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['case_id', 'wsi'])
+        writer.writerows(zip(case_ids, wsi_files))
+    PY
+    """
+    stub:
+    """
+    echo "case_id,wsi" > dataset.csv
+    """
+}
 process check_done {
     input:
     path(results_dir)

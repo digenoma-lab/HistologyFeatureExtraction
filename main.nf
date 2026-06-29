@@ -26,9 +26,9 @@ workflow intersect_all {
     intersect_features(all_combinations_features, output_dir, "features", dataset_join)
     intersect_slide_features(all_combinations_slide_features, output_dir, "slide_features", dataset_join)
     emit:
-    pendant_patches = intersect_patches.out.pendant
-    pendant_features = intersect_features.out.pendant
-    pendant_slide_features = intersect_slide_features.out.pendant
+    dataset_patches = intersect_patches.out.dataset_batch
+    dataset_features = intersect_features.out.dataset_batch
+    dataset_slide_features = intersect_slide_features.out.dataset_batch
 }
 
 workflow {
@@ -86,7 +86,7 @@ workflow {
         output_dir
     )
 
-    intersect_all.out.pendant_patches.view()
-    intersect_all.out.pendant_features.view()
-    intersect_all.out.pendant_slide_features.view()
+    intersect_all.out.dataset_patches.view()
+    intersect_all.out.dataset_features.view()
+    intersect_all.out.dataset_slide_features.view()
 }

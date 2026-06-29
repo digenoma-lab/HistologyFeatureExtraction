@@ -4,7 +4,9 @@ include {
     intersect_goals_done;
     parse_patches;
     parse_features;
-    parse_slide_features
+    parse_slide_features;
+    setup_dataset_batch_features;
+    setup_dataset_batch_patches
 } from '../modules/trident.nf'
 
 def non_empty_files = { ch ->
@@ -49,16 +51,22 @@ workflow intersect {
         intersect_goals_done(merge_goals.out.goals, check_done.out.patches)
         parse_patches(non_empty_files(intersect_goals_done.out.goals_not_done))
         pendant = pending_work(parse_patches.out.splitCsv(header: true), dataset_join)
+        setup_dataset_batch_patches(pendant)
+        dataset_batch = setup_dataset_batch_patches.out.dataset
     }
     else if (mode == "features") {
         intersect_goals_done(merge_goals.out.goals, check_done.out.features)
         parse_features(non_empty_files(intersect_goals_done.out.goals_not_done))
         pendant = pending_work(parse_features.out.splitCsv(header: true), dataset_join, true)
+        setup_dataset_batch_features(pendant)
+        dataset_batch = setup_dataset_batch_features.out.dataset
     }
     else if (mode == "slide_features") {
         intersect_goals_done(merge_goals.out.goals, check_done.out.slide_features)
         parse_slide_features(non_empty_files(intersect_goals_done.out.goals_not_done))
         pendant = pending_work(parse_slide_features.out.splitCsv(header: true), dataset_join, true)
+        setup_dataset_batch_features(pendant)
+        dataset_batch = setup_dataset_batch_features.out.dataset
     }
     else {
         error "Invalid mode: ${mode}"
@@ -68,4 +76,5 @@ workflow intersect {
     done = intersect_goals_done.out.goals_done
     non_done = intersect_goals_done.out.goals_not_done
     pendant = pendant
+    dataset_batch = dataset_batch
 }
