@@ -300,8 +300,7 @@ process segmentation_batch {
 
 process extract_coordinates_batch {
     input:
-    val(seg_done)
-    tuple val(mag), val(patch_size), val(overlap), val(wsi_files), path(dataset)
+    tuple val(mag), val(patch_size), val(overlap), val(wsi_files), path(dataset), val(seg_done)
     path(wsi_dir)
     path(trident_dir)
     output:
@@ -324,12 +323,11 @@ process extract_coordinates_batch {
 
 process patch_features_batch {
     input:
-    val(coords_done)
-    tuple val(mag), val(patch_size), val(overlap), val(patch_encoder), val(wsi_files), path(dataset)
+    tuple val(mag), val(patch_size), val(overlap), val(patch_encoder), val(wsi_files), path(dataset), val(coords_done)
     path(wsi_dir)
     path(trident_dir)
     output:
-    val(true), emit: coords
+    val(true), emit: patch_features_done
     script:
     """
     python -c "from huggingface_hub import login; login(token='${params.token}')"
@@ -346,52 +344,21 @@ process patch_features_batch {
     """
 }
 
-process patch_features {
+process slide_features_batch {
     input:
-    tuple val(patch_encoder), val(wsi), path(dataset), val(patch_size), val(mag), val(batch_size), val(overlap), path(patches, stageAs: 'patches/*'), path(visualization, stageAs: 'visualization/*')
+    tuple val(mag), val(patch_size), val(overlap), val(slide_encoder), val(wsi_files), path(dataset), val(patch_features_done)
     path(wsi_dir)
     path(trident_dir)
     output:
-    tuple val(patch_encoder), val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/*.h5"), emit: patch_features
+    val(true), emit: slide_features_done
     script:
     """
     python -c "from huggingface_hub import login; login(token='${params.token}')"
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/patches/
-    mv patches/*.h5 ${mag}x_${patch_size}px_${overlap}px_overlap/patches/
-
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/
-    mv visualization/*.jpg ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/
 
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir . --patch_size ${patch_size} \\
-        --mag ${mag} --task feat --patch_encoder ${patch_encoder} \\
-        --batch_size ${batch_size} --custom_list_of_wsis ${dataset} --max_workers 10
-    """
-    stub:
-    """
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
-    touch ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/${wsi.replace('.tif', '.h5').replace('.svs', '.h5')}
-    """
-}
-
-process slide_features {
-    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/*.h5"
-    input:
-    tuple val(patch_encoder), val(slide_encoder), val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path(features, stageAs: 'features/*')
-    path(wsi_dir)
-    path(trident_dir)
-    output:
-    tuple val(slide_encoder), val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/slide_features_${slide_encoder}/*.h5"), emit: slide_features
-    script:
-    """
-    python -c "from huggingface_hub import login; login(token='${params.token}')"
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
-    mv features/*.h5 ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
-
-    python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir . --patch_size ${patch_size} \\
+        --job_dir ${file(params.outdir)} --patch_size ${patch_size} \\
         --mag ${mag} --task feat --slide_encoder ${slide_encoder} \\
-        --batch_size ${batch_size}
+        --batch_size 200
     """
     stub:
     """

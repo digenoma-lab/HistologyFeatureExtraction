@@ -2,7 +2,7 @@ include { intersect as intersect_features;
 intersect as intersect_patches;
 intersect as intersect_slide_features;
 intersect as intersect_segmentation } from './workflows/config.nf'
-include { segmentation_batch; extract_coordinates_batch; patch_features_batch } from './modules/trident.nf'
+include { segmentation_batch; extract_coordinates_batch; patch_features_batch; slide_features_batch } from './modules/trident.nf'
 workflow intersect_all {
     take:
     dataset
@@ -92,13 +92,23 @@ workflow {
     )
     segmentation_batch(intersect_all.out.dataset_segmentation, wsi_dir, trident_dir)
 
-    seg_done = segmentation_batch.out.seg_done.ifEmpty( channel.of(true) )
+    seg_done = segmentation_batch.out.seg_done.ifEmpty(channel.of(true))
 
-    extract_coordinates_batch(seg_done,
-        intersect_all.out.dataset_patches, wsi_dir, trident_dir)
-    
-    coords_done = extract_coordinates_batch.out.coords_done.ifEmpty( channel.of(true) )
+    extract_coordinates_batch(
+        intersect_all.out.dataset_patches.combine(seg_done),
+        wsi_dir, trident_dir)
 
-    patch_features_batch(coords_done,
-        intersect_all.out.dataset_features, wsi_dir, trident_dir)
+    coords_done = extract_coordinates_batch.out.coords_done.ifEmpty(channel.of(true))
+
+    patch_features_batch(
+        intersect_all.out.dataset_features.combine(coords_done.first()),
+        wsi_dir, trident_dir)
+
+    patch_features_done = patch_features_batch.out.patch_features_done.ifEmpty(channel.of(true))
+
+    slide_features_batch(
+        intersect_all.out.dataset_slide_features.combine(patch_features_done.first()),
+        wsi_dir, trident_dir)
+
+    intersect_all.out.dataset_slide_features.view()
 }
