@@ -3,7 +3,7 @@ include { intersect as intersect_features;
 intersect as intersect_patches;
 intersect as intersect_slide_features;
 intersect as intersect_segmentation } from './workflows/config.nf'
-include { segmentation_batch } from './modules/trident.nf'
+include { segmentation_batch; extract_coordinates_batch } from './modules/trident.nf'
 workflow intersect_all {
     take:
     dataset
@@ -24,7 +24,7 @@ workflow intersect_all {
     .collect()
 
     all_combinations_segmentation = dataset
-        .map { row -> params.outdir.replaceAll(/\/$/, '') + "/thumbnails/" + row[0] + ".jpg" }
+        .map { row -> params.outdir.replaceAll(/\/$/, '') + "/contours/" + row[0] + ".jpg" }
         .collect()
 
     intersect_patches(all_combinations_patches, output_dir, "patches", dataset_join)
@@ -92,11 +92,9 @@ workflow {
         unique_slide_encoders,
         output_dir
     )
-
-    intersect_all.out.dataset_patches.view({row -> "dataset_patches: ${row}"})
-    intersect_all.out.dataset_features.view({row -> "dataset_features: ${row}"})
-    intersect_all.out.dataset_slide_features.view({row -> "dataset_slide_features: ${row}"})
-    intersect_all.out.dataset_segmentation.view({row -> "dataset_segmentation: ${row}"})
-
-    segmentation_batch(intersect_all.out.dataset_segmentation, wsi_dir, trident_dir)
+    intersect_all.out.dataset_segmentation.view()
+    segmentation_batch(intersect_all.out.dataset_segmentation, output_dir, wsi_dir, trident_dir)
+    //intersect_all.out.dataset_patches.view()
+    /*extract_coordinates_batch(segmentation_batch.out.seg,
+        intersect_all.out.dataset_patches, wsi_dir, trident_dir)*/
 }

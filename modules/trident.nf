@@ -99,9 +99,7 @@ process check_done {
 
     results = Path("${results_dir}")
     outdir = "${params.outdir}".rstrip("/")
-    thumb_dir = results / "thumbnails"
     contour_dir = results / "contours"
-    geojson_dir = results / "contours_geojson"
     done = []
 
     def is_file(path: Path) -> bool:
@@ -110,13 +108,10 @@ process check_done {
         except OSError:
             return False
 
-    if thumb_dir.is_dir():
-        for thumb in sorted(thumb_dir.glob("*.jpg")):
-            stem = thumb.stem
-            contour = contour_dir / f"{stem}.jpg"
-            geojson = geojson_dir / f"{stem}.geojson"
-            if is_file(thumb) and is_file(contour) and is_file(geojson):
-                done.append(f"{outdir}/thumbnails/{stem}.jpg")
+    if contour_dir.is_dir():
+        for contour in sorted(contour_dir.glob("*.jpg")):
+            if is_file(contour):
+                done.append(f"{outdir}/contours/{contour.name}")
 
     Path("segmentation.csv").write_text("\\n".join(done) + ("\\n" if done else ""))
     PY
@@ -307,19 +302,18 @@ process segmentation {
 }
 
 process segmentation_batch {
-    publishDir "${params.outdir}", mode: "copy", pattern: "thumbnails/*.jpg"
-    publishDir "${params.outdir}", mode: "copy", pattern: "contours/*.jpg"
-    publishDir "${params.outdir}", mode: "copy", pattern: "contours_geojson/*.geojson"
+    
     input:
     tuple val(wsi_files), path(dataset)
+    path(output_dir)
     path(wsi_dir)
     path(trident_dir)
     output:
-    tuple val(wsi_files), path(dataset), path("thumbnails/*.jpg"), path("contours/*.jpg"), path("contours_geojson/*.geojson"), emit: seg
+    path(output_dir), emit: seg
     script:
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir . --task seg \\
+        --job_dir ${output_dir} --task seg \\
         --custom_list_of_wsis ${dataset}
     """
     stub:
@@ -327,6 +321,32 @@ process segmentation_batch {
     mkdir -p thumbnails contours contours_geojson
     """
 }
+
+process extract_coordinates_batch {
+    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/patches/*.h5"
+    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/visualization/*.jpg"
+    input:
+    tuple val(wsi), path(thumbnails, stageAs: 'thumbnails/*'), path(contours, stageAs: 'contours/*'), path(contours_geojson, stageAs: 'contours_geojson/*'), val(patch_size), val(mag), val(batch_size), val(overlap)
+    path(dataset)
+    path(wsi_dir)
+    path(trident_dir)
+    output:
+    tuple val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/patches/*.h5"), path("${mag}x_${patch_size}px_${overlap}px_overlap/visualization/*.jpg"), emit: coords
+    script:
+    """
+    python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
+        --job_dir . --patch_size ${patch_size} --mag ${mag} \\
+        --task coords --custom_list_of_wsis ${dataset}
+    """
+    stub:
+    """
+    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/patches/
+    touch ${mag}x_${patch_size}px_${overlap}px_overlap/patches/${wsi.replace('.tif', '.h5').replace('.svs', '.h5')}
+    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/
+    touch ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/${wsi.replace('.tif', '.jpg').replace('.svs', '.jpg')}
+    """
+}
+
 process extract_coordinates {
     publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/patches/*.h5"
     publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/visualization/*.jpg"
