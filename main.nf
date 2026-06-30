@@ -82,7 +82,6 @@ workflow {
         }
 
     trident_dir = channel.value(file(params.trident_dir))
-    output_dir = channel.value(file(params.outdir))
 
     intersect_all(
         dataset.intersect,
@@ -90,11 +89,12 @@ workflow {
         unique_configs,
         unique_feature_encoders,
         unique_slide_encoders,
-        output_dir
+        channel.value(file(params.outdir))
     )
-    intersect_all.out.dataset_segmentation.view()
-    segmentation_batch(intersect_all.out.dataset_segmentation, output_dir, wsi_dir, trident_dir)
-    //intersect_all.out.dataset_patches.view()
-    /*extract_coordinates_batch(segmentation_batch.out.seg,
-        intersect_all.out.dataset_patches, wsi_dir, trident_dir)*/
+    segmentation_batch(intersect_all.out.dataset_segmentation, wsi_dir, trident_dir)
+
+    seg_done = segmentation_batch.out.seg_done.ifEmpty( channel.of(true) )
+
+    extract_coordinates_batch(seg_done,
+        intersect_all.out.dataset_patches, wsi_dir, trident_dir)
 }

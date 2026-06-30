@@ -279,41 +279,18 @@ process parse_slide_features {
     """
 }
 
-process segmentation {
-    publishDir "${params.outdir}", mode: "copy", pattern: "thumbnails/*.jpg"
-    publishDir "${params.outdir}", mode: "copy", pattern: "contours/*.jpg"
-    publishDir "${params.outdir}", mode: "copy", pattern: "contours_geojson/*.geojson"
-    input:
-    tuple val(case_ids), val(wsi_files), path(dataset)
-    path(wsi_dir)
-    path(trident_dir)
-    output:
-    tuple val(wsi_files), path(dataset), path("thumbnails/*.jpg"), path("contours/*.jpg"), path("contours_geojson/*.geojson"), emit: seg
-    script:
-    """
-    python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir . --task seg \\
-        --custom_list_of_wsis ${dataset}
-    """
-    stub:
-    """
-    mkdir -p thumbnails contours contours_geojson
-    """
-}
-
 process segmentation_batch {
     
     input:
     tuple val(wsi_files), path(dataset)
-    path(output_dir)
     path(wsi_dir)
     path(trident_dir)
     output:
-    path(output_dir), emit: seg
+    val(true), emit: seg_done
     script:
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir ${output_dir} --task seg \\
+        --job_dir ${file(params.outdir)} --task seg \\
         --custom_list_of_wsis ${dataset}
     """
     stub:
@@ -323,51 +300,25 @@ process segmentation_batch {
 }
 
 process extract_coordinates_batch {
-    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/patches/*.h5"
-    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/visualization/*.jpg"
     input:
-    tuple val(wsi), path(thumbnails, stageAs: 'thumbnails/*'), path(contours, stageAs: 'contours/*'), path(contours_geojson, stageAs: 'contours_geojson/*'), val(patch_size), val(mag), val(batch_size), val(overlap)
-    path(dataset)
+    val(seg_done)
+    tuple val(mag), val(patch_size), val(overlap), val(wsi_files), path(dataset)
     path(wsi_dir)
     path(trident_dir)
     output:
-    tuple val(wsi), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/patches/*.h5"), path("${mag}x_${patch_size}px_${overlap}px_overlap/visualization/*.jpg"), emit: coords
+    val(true), emit: coords
     script:
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir . --patch_size ${patch_size} --mag ${mag} \\
+        --job_dir ${file(params.outdir)} --patch_size ${patch_size} --mag ${mag} \\
         --task coords --custom_list_of_wsis ${dataset}
     """
     stub:
     """
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/patches/
-    touch ${mag}x_${patch_size}px_${overlap}px_overlap/patches/${wsi.replace('.tif', '.h5').replace('.svs', '.h5')}
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/
-    touch ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/${wsi.replace('.tif', '.jpg').replace('.svs', '.jpg')}
-    """
-}
-
-process extract_coordinates {
-    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/patches/*.h5"
-    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/visualization/*.jpg"
-    input:
-    tuple val(wsi), path(dataset), path(thumbnails, stageAs: 'thumbnails/*'), path(contours, stageAs: 'contours/*'), path(contours_geojson, stageAs: 'contours_geojson/*'), val(patch_size), val(mag), val(batch_size), val(overlap)
-    path(wsi_dir)
-    path(trident_dir)
-    output:
-    tuple val(wsi), path(dataset), val(patch_size), val(mag), val(batch_size), val(overlap), path("${mag}x_${patch_size}px_${overlap}px_overlap/patches/*.h5"), path("${mag}x_${patch_size}px_${overlap}px_overlap/visualization/*.jpg"), emit: coords
-    script:
-    """
-    python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
-        --job_dir . --patch_size ${patch_size} --mag ${mag} \\
-        --task coords --custom_list_of_wsis ${dataset}
-    """
-    stub:
-    """
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/patches/
-    touch ${mag}x_${patch_size}px_${overlap}px_overlap/patches/${wsi.replace('.tif', '.h5').replace('.svs', '.h5')}
-    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/
-    touch ${mag}x_${patch_size}px_${overlap}px_overlap/visualization/${wsi.replace('.tif', '.jpg').replace('.svs', '.jpg')}
+    mkdir -p "${params.outdir}/${mag}x_${patch_size}px_${overlap}px_overlap/patches"
+    touch "${params.outdir}/${mag}x_${patch_size}px_${overlap}px_overlap/patches/stub.h5"
+    mkdir -p "${params.outdir}/${mag}x_${patch_size}px_${overlap}px_overlap/visualization"
+    touch "${params.outdir}/${mag}x_${patch_size}px_${overlap}px_overlap/visualization/stub.jpg"
     """
 }
 
