@@ -1,9 +1,8 @@
-include { preprocessing; patch_feature_extraction; slide_feature_extraction } from './workflows/trident.nf'
 include { intersect as intersect_features;
 intersect as intersect_patches;
 intersect as intersect_slide_features;
 intersect as intersect_segmentation } from './workflows/config.nf'
-include { segmentation_batch; extract_coordinates_batch } from './modules/trident.nf'
+include { segmentation_batch; extract_coordinates_batch; patch_features_batch } from './modules/trident.nf'
 workflow intersect_all {
     take:
     dataset
@@ -97,4 +96,9 @@ workflow {
 
     extract_coordinates_batch(seg_done,
         intersect_all.out.dataset_patches, wsi_dir, trident_dir)
+    
+    coords_done = extract_coordinates_batch.out.coords_done.ifEmpty( channel.of(true) )
+
+    patch_features_batch(coords_done,
+        intersect_all.out.dataset_features, wsi_dir, trident_dir)
 }

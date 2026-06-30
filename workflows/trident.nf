@@ -1,17 +1,9 @@
-include { segmentation; extract_coordinates; slide_features; patch_features } from '../modules/trident.nf'
-workflow preprocessing {
-    take:
-    unique_configs
-    seg
-    wsi_dir
-    trident_path
-    main:
-    unique_configs = seg.combine(unique_configs)
-    extract_coordinates(unique_configs, wsi_dir, trident_path)
-    emit:
-    coords = extract_coordinates.out.coords
-}
-workflow patch_feature_extraction { 
+include { slide_features; patch_features } from '../modules/trident.nf'
+
+// Legacy per-slide workflows (segmentation/extract_coordinates) replaced by
+// segmentation_batch / extract_coordinates_batch in main.nf.
+
+workflow patch_feature_extraction {
     take:
     unique_feature_encoders
     coords
@@ -45,7 +37,7 @@ workflow patch_feature_extraction {
             )
         }
     patch_features(combined_configs, wsi_dir, trident_path)
-    emit: 
+    emit:
     patch_features = patch_features.out.patch_features
 }
 

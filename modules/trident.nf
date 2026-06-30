@@ -1,4 +1,3 @@
-
 process setup_dataset {
     input:
     tuple val(case_id), val(wsi)
@@ -306,7 +305,7 @@ process extract_coordinates_batch {
     path(wsi_dir)
     path(trident_dir)
     output:
-    val(true), emit: coords
+    val(true), emit: coords_done
     script:
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
@@ -322,8 +321,32 @@ process extract_coordinates_batch {
     """
 }
 
+
+process patch_features_batch {
+    input:
+    val(coords_done)
+    tuple val(mag), val(patch_size), val(overlap), val(patch_encoder), val(wsi_files), path(dataset)
+    path(wsi_dir)
+    path(trident_dir)
+    output:
+    val(true), emit: coords
+    script:
+    """
+    python -c "from huggingface_hub import login; login(token='${params.token}')"
+
+    python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
+        --job_dir ${file(params.outdir)} --patch_size ${patch_size} \\
+        --mag ${mag} --task feat --patch_encoder ${patch_encoder} \\
+        --batch_size 200 --custom_list_of_wsis ${dataset} --max_workers 10
+    """
+    stub:
+    """
+    mkdir -p ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/
+    touch ${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/${wsi.replace('.tif', '.h5').replace('.svs', '.h5')}
+    """
+}
+
 process patch_features {
-    publishDir "${params.outdir}", mode: "copy", pattern: "${mag}x_${patch_size}px_${overlap}px_overlap/features_${patch_encoder}/*.h5"
     input:
     tuple val(patch_encoder), val(wsi), path(dataset), val(patch_size), val(mag), val(batch_size), val(overlap), path(patches, stageAs: 'patches/*'), path(visualization, stageAs: 'visualization/*')
     path(wsi_dir)
