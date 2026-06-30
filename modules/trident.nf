@@ -82,7 +82,7 @@ process setup_dataset_batch_segmentation {
 }
 process check_done {
     input:
-    path(results_dir)
+    val(results_dir)
     output:
     tuple path("patches.csv"), path("features.csv"), path("slide_features.csv"), emit: done
     path("patches.csv"), emit: patches
@@ -91,15 +91,15 @@ process check_done {
     path("segmentation.csv"), emit: segmentation
     script:
     """
-    find -L ${results_dir} -type f -name "*.h5" ! -path "*/pipeline_info/*" | sort > info.csv
     python - <<'PY'
     import os
     from pathlib import Path
 
     results = Path("${results_dir}")
     outdir = "${params.outdir}".rstrip("/")
-    contour_dir = results / "contours"
-    done = []
+
+    def goal_path(path: Path) -> str:
+        return f"{outdir}/{path.relative_to(results).as_posix()}"
 
     def is_file(path: Path) -> bool:
         try:
@@ -107,16 +107,34 @@ process check_done {
         except OSError:
             return False
 
-    if contour_dir.is_dir():
-        for contour in sorted(contour_dir.glob("*.jpg")):
-            if is_file(contour):
-                done.append(f"{outdir}/contours/{contour.name}")
+    patches, features, slide_features, segmentation = [], [], [], []
 
-    Path("segmentation.csv").write_text("\\n".join(done) + ("\\n" if done else ""))
+    if results.is_dir():
+        for h5 in sorted(results.rglob("*.h5")):
+            if "pipeline_info" in h5.parts:
+                continue
+            rel = goal_path(h5)
+            if "/patches/" in rel:
+                patches.append(rel)
+            elif "/slide_features_" in rel:
+                slide_features.append(rel)
+            elif "/features_" in rel:
+                features.append(rel)
+
+        contour_dir = results / "contours"
+        if contour_dir.is_dir():
+            for contour in sorted(contour_dir.glob("*.jpg")):
+                if is_file(contour):
+                    segmentation.append(f"{outdir}/contours/{contour.name}")
+
+    def write_csv(name: str, lines: list) -> None:
+        Path(name).write_text("\\n".join(lines) + ("\\n" if lines else ""))
+
+    write_csv("patches.csv", patches)
+    write_csv("features.csv", features)
+    write_csv("slide_features.csv", slide_features)
+    write_csv("segmentation.csv", segmentation)
     PY
-    grep "/patches/" info.csv > patches.csv
-    grep "/slide_features_" info.csv > slide_features.csv
-    grep "/features_" info.csv > features.csv
     """
     stub:
     """

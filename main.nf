@@ -88,7 +88,7 @@ workflow {
         unique_configs,
         unique_feature_encoders,
         unique_slide_encoders,
-        channel.value(file(params.outdir))
+        channel.value(params.outdir)
     )
     segmentation_batch(intersect_all.out.dataset_segmentation, wsi_dir, trident_dir)
 
