@@ -10,3 +10,5 @@ virchow2,mean-virchow2,224,20,200,0
 conch_v15,titan,512,20,200,0
 ctranspath,chief,256,20,200,0
 virchow,prism,224,20,200,0
+gigapath,mean-gigapath,256,20,200,0
+gigapath,gigapath,256,20,200,0
