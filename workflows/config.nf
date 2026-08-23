@@ -42,12 +42,12 @@ def pending_work_segmentation = { csv_ch, dataset_ch ->
     csv_ch
         .map { row -> tuple(row.wsi) }
         .combine(dataset_ch, by: 0)
-        .map { wsi, case_id, wsi_file -> "${case_id}\t${wsi_file}" }
-        .collect()
-        .map { lines ->
+        .map { wsi, case_id, wsi_file -> tuple(case_id, wsi_file) }
+        .collate(params.seg_batch_size)
+        .map { rows ->
             tuple(
-                lines.collect { it.split('\t', 2)[0] },
-                lines.collect { it.split('\t', 2)[1] }
+                rows.collect { it[0] },
+                rows.collect { it[1] }
             )
         }
 }

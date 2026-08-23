@@ -308,7 +308,7 @@ process segmentation_batch {
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir ${file(params.outdir)} --task seg \\
-        --custom_list_of_wsis ${dataset}
+        --custom_list_of_wsis ${dataset} --max_workers 10
     """
     stub:
     """
@@ -327,7 +327,7 @@ process extract_coordinates_batch {
     """
     python ${trident_dir}/run_batch_of_slides.py --wsi_dir ${wsi_dir} \\
         --job_dir ${file(params.outdir)} --patch_size ${patch_size} --mag ${mag} \\
-        --task coords --custom_list_of_wsis ${dataset}
+        --task coords --custom_list_of_wsis ${dataset} --max_workers 1
     """
     stub:
     """

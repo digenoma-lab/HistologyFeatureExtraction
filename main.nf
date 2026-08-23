@@ -92,7 +92,11 @@ workflow {
     )
     segmentation_batch(intersect_all.out.dataset_segmentation, wsi_dir, trident_dir)
 
-    seg_done = segmentation_batch.out.seg_done.ifEmpty(channel.of(true))
+    // Wait for every seg batch (or skip if none pending) before coordinates.
+    seg_done = segmentation_batch.out.seg_done
+        .ifEmpty(true)
+        .collect()
+        .map { true }
 
     extract_coordinates_batch(
         intersect_all.out.dataset_patches.combine(seg_done),
